@@ -17,6 +17,7 @@ export function parseArgs(args: string[]) {
       "dry-run",
       "save-config",
       "force",
+      "stdout",
     ],
     string: [
       "project",
@@ -37,6 +38,7 @@ export function parseArgs(args: string[]) {
       "format",
       "color",
       "region",
+      "output-dir",
     ],
     collect: ["grep", "include", "exclude", "region"],
     default: {

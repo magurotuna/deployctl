@@ -1,3 +1,5 @@
+// Copyright 2021 Deno Land Inc. All rights reserved. MIT license.
+
 import { parseArgsForLogSubcommand } from "./logs.ts";
 import {
   assertEquals,
