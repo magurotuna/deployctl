@@ -59,7 +59,6 @@ Deno.test("parseArgsForDownloadSrcSubcommand", async (t) => {
     assertThrows(() => parseHelper(["--stdout"]), Error, "exit code: 1");
   });
 
-  // FIXME
   await t.step("specify output-dir and deployment ID", () => {
     const got = parseHelper([
       "--token=mytoken",
