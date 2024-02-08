@@ -111,7 +111,7 @@ Deno.test("getFilePathToSave", async (t) => {
     {
       name: "top-level",
       args: {
-        entry_specifier: "file:///src/foo.js",
+        entrySpecifier: "file:///src/foo.js",
         dir: "./out",
       },
       expected: "out/foo.js",
@@ -119,7 +119,7 @@ Deno.test("getFilePathToSave", async (t) => {
     {
       name: "two-level",
       args: {
-        entry_specifier: "file:///src/dist/foo.js",
+        entrySpecifier: "file:///src/dist/foo.js",
         dir: "./out",
       },
       expected: "out/dist/foo.js",
@@ -127,7 +127,7 @@ Deno.test("getFilePathToSave", async (t) => {
     {
       name: "absolute dir",
       args: {
-        entry_specifier: "file:///src/foo.js",
+        entrySpecifier: "file:///src/foo.js",
         dir: "/tmp",
       },
       expected: "/tmp/foo.js",
@@ -135,7 +135,7 @@ Deno.test("getFilePathToSave", async (t) => {
     {
       name: "relative dir",
       args: {
-        entry_specifier: "file:///src/foo.js",
+        entrySpecifier: "file:///src/foo.js",
         dir: "out",
       },
       expected: "out/foo.js",
@@ -143,7 +143,7 @@ Deno.test("getFilePathToSave", async (t) => {
     {
       name: "double src",
       args: {
-        entry_specifier: "file:///src/src/foo.js",
+        entrySpecifier: "file:///src/src/foo.js",
         dir: "./out",
       },
       expected: "out/src/foo.js",
@@ -151,7 +151,7 @@ Deno.test("getFilePathToSave", async (t) => {
     {
       name: "remote module",
       args: {
-        entry_specifier: "https://deno.land/std@0.177.0/async/delay.ts",
+        entrySpecifier: "https://deno.land/std@0.177.0/async/delay.ts",
         dir: "./out",
       },
       expected: null,
@@ -160,7 +160,7 @@ Deno.test("getFilePathToSave", async (t) => {
 
   for (const step of steps) {
     await t.step(step.name, () => {
-      const got = getFilePathToSave(step.args.entry_specifier, step.args.dir);
+      const got = getFilePathToSave(step.args.entrySpecifier, step.args.dir);
       assertEquals(got, step.expected);
     });
   }

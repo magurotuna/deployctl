@@ -132,8 +132,8 @@ export function getFilePathToSave(
   );
   const path = fromFileUrl(specifier);
   const re = new RegExp("^/src/");
-  const src_removed = path.replace(re, "");
-  return join(dir, src_removed);
+  const srcRemoved = path.replace(re, "");
+  return join(dir, srcRemoved);
 }
 
 type OutputTo = {
