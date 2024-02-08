@@ -9,7 +9,11 @@ import {
   assert,
   unreachable,
 } from "https://deno.land/std@0.194.0/testing/asserts.ts";
-import { fromFileUrl, join } from "https://deno.land/std@0.194.0/path/mod.ts";
+import {
+  dirname,
+  fromFileUrl,
+  join,
+} from "https://deno.land/std@0.194.0/path/mod.ts";
 import { DeploymentDownloadEntry } from "../utils/api_types.ts";
 
 const help = `deployctl download-src
@@ -88,11 +92,8 @@ async function downloadToFs(
   const spinner = wait("").start();
 
   try {
-    spinner.info(`Ensuring the directory '${dir}' exists...`);
-    await Deno.mkdir(dir, { recursive: true });
-    spinner.info(`'${dir}' already exists or has just been created`);
-
     spinner.info("Starting download...");
+
     for await (const entry of entryStream) {
       const path = getFilePathToSave(entry.specifier, dir);
       if (path === null) {
@@ -101,6 +102,11 @@ async function downloadToFs(
         );
         continue;
       }
+
+      // Ensure the directory exists
+      const dirPath = dirname(path);
+      await Deno.mkdir(dirPath, { recursive: true });
+
       await Deno.writeTextFile(
         path,
         entry.source,
