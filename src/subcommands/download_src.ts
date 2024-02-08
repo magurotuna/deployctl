@@ -1,10 +1,16 @@
 // Copyright 2021 Deno Land Inc. All rights reserved. MIT license.
 
-import { API, APIError } from "../utils/api.ts";
+import { API } from "../utils/api.ts";
 import { Args as RawArgs } from "../args.ts";
+import { wait } from "../utils/spinner.ts";
 import { error } from "../error.ts";
 import TokenProvisioner from "../utils/access_token.ts";
-import { unreachable } from "https://deno.land/std@0.194.0/testing/asserts.ts";
+import {
+  assert,
+  unreachable,
+} from "https://deno.land/std@0.194.0/testing/asserts.ts";
+import { fromFileUrl, join } from "https://deno.land/std@0.194.0/path/mod.ts";
+import { DeploymentDownloadEntry } from "../utils/api_types.ts";
 
 const help = `deployctl download-src
 Download the source code of a deployment, either to stdout (by default) or to the specified directory.
@@ -16,12 +22,12 @@ POSITIONAL ARGUMENTS:
     <DEPLOYMENT_ID>    The deployment ID to download. Example: abcd1234
 
 OPTIONS:
-        -h, --help         Prints this help information
-        --stdout           Write the downloaded source code to stdout. Exclusive with --output-dir.
-                           If neither --stdout nor --output-dir is given, defaults to stdout.
-        --output-dir=<DIR> Write the downloaded source code to within the specified directory. Exclusive with --stdout.
-                           If neither --stdout nor --output-dir is given, defaults to stdout.
-        --token=<TOKEN>    The API token to use (defaults to DENO_DEPLOY_TOKEN env var)
+    -h, --help         Prints this help information
+    --stdout           Write the downloaded source code to stdout. Exclusive with --output-dir.
+                       If neither --stdout nor --output-dir is given, defaults to stdout.
+    --output-dir=<DIR> Write the downloaded source code to within the specified directory. Exclusive with --stdout.
+                       If neither --stdout nor --output-dir is given, defaults to stdout.
+    --token=<TOKEN>    The API token to use (defaults to DENO_DEPLOY_TOKEN env var)
 `;
 
 export default async function (rawArgs: RawArgs): Promise<void> {
@@ -47,25 +53,87 @@ async function downloadSrc(args: DownloadSrcArgsDownloadMode): Promise<void> {
     : API.withTokenProvisioner(TokenProvisioner);
 
   const stream = await api.downloadDeployment(args.deploymentId);
-  for await (const entry of stream) {
-    switch (args.outputTo.to) {
-      case "stdout":
-        console.log(`${"-".repeat(80)}
+
+  switch (args.outputTo.to) {
+    case "stdout":
+      await downloadToStdout(stream);
+      break;
+    case "fs":
+      await downloadToFs(stream, args.outputTo.dir);
+      break;
+    default: {
+      const _: never = args.outputTo;
+      unreachable();
+    }
+  }
+}
+
+async function downloadToStdout(
+  entryStream: AsyncIterable<DeploymentDownloadEntry>,
+) {
+  for await (const entry of entryStream) {
+    console.log(`${"-".repeat(80)}
 specifier: ${entry.specifier}
 kind:      ${entry.kind}
 
 ${entry.source}
 `);
-        break;
-      case "fs":
-        unreachable();
-        break;
-      default: {
-        const _: never = args.outputTo;
-        unreachable();
-      }
-    }
   }
+}
+
+async function downloadToFs(
+  entryStream: AsyncIterable<DeploymentDownloadEntry>,
+  dir: string,
+) {
+  const spinner = wait("").start();
+
+  try {
+    spinner.info(`Ensuring the directory '${dir}' exists...`);
+    await Deno.mkdir(dir, { recursive: true });
+    spinner.info(`'${dir}' already exists or has just been created`);
+
+    spinner.info("Starting download...");
+    for await (const entry of entryStream) {
+      const path = getFilePathToSave(entry.specifier, dir);
+      if (path === null) {
+        spinner.warn(
+          `Skipping '${entry.specifier}' because it's a remote module`,
+        );
+        continue;
+      }
+      await Deno.writeTextFile(
+        path,
+        entry.source,
+      );
+      spinner.info(`Wrote to ${path}`);
+    }
+
+    spinner.succeed("Done");
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      spinner.fail(`Failed: ${err.message}`);
+    }
+    throw err;
+  }
+}
+
+export function getFilePathToSave(
+  entrySpecifier: string,
+  dir: string,
+): string | null {
+  const specifier = new URL(entrySpecifier);
+  if (specifier.protocol !== "file:") {
+    return null;
+  }
+
+  assert(
+    specifier.pathname.startsWith("/src"),
+    `specifier is expected to start with "file:///src", but got '${entrySpecifier}'`,
+  );
+  const path = fromFileUrl(specifier);
+  const re = new RegExp("^/src/");
+  const src_removed = path.replace(re, "");
+  return join(dir, src_removed);
 }
 
 type OutputTo = {

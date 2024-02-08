@@ -1,4 +1,7 @@
-import { parseArgsForDownloadSrcSubcommand } from "./download_src.ts";
+import {
+  getFilePathToSave,
+  parseArgsForDownloadSrcSubcommand,
+} from "./download_src.ts";
 import {
   assertEquals,
   assertThrows,
@@ -100,4 +103,64 @@ Deno.test("parseArgsForDownloadSrcSubcommand", async (t) => {
       });
     },
   );
+});
+
+Deno.test("getFilePathToSave", async (t) => {
+  const steps = [
+    {
+      name: "top-level",
+      args: {
+        entry_specifier: "file:///src/foo.js",
+        dir: "./out",
+      },
+      expected: "out/foo.js",
+    },
+    {
+      name: "two-level",
+      args: {
+        entry_specifier: "file:///src/dist/foo.js",
+        dir: "./out",
+      },
+      expected: "out/dist/foo.js",
+    },
+    {
+      name: "absolute dir",
+      args: {
+        entry_specifier: "file:///src/foo.js",
+        dir: "/tmp",
+      },
+      expected: "/tmp/foo.js",
+    },
+    {
+      name: "relative dir",
+      args: {
+        entry_specifier: "file:///src/foo.js",
+        dir: "out",
+      },
+      expected: "out/foo.js",
+    },
+    {
+      name: "double src",
+      args: {
+        entry_specifier: "file:///src/src/foo.js",
+        dir: "./out",
+      },
+      expected: "out/src/foo.js",
+    },
+    {
+      name: "remote module",
+      args: {
+        entry_specifier: "https://deno.land/std@0.177.0/async/delay.ts",
+        dir: "./out",
+      },
+      expected: null,
+    },
+  ] as const;
+
+  for (const step of steps) {
+    await t.step(step.name, () => {
+      const got = getFilePathToSave(step.args.entry_specifier, step.args.dir);
+      assertEquals(got, step.expected);
+    });
+  }
 });
