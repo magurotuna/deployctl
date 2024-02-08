@@ -45,32 +45,26 @@ async function downloadSrc(args: DownloadSrcArgsDownloadMode): Promise<void> {
   const api = args.token
     ? API.fromToken(args.token)
     : API.withTokenProvisioner(TokenProvisioner);
+
   const stream = await api.downloadDeployment(args.deploymentId);
-  try {
-    for await (const entry of stream) {
-      switch (args.outputTo.to) {
-        case "stdout":
-          console.log(`----------------------------------------
+  for await (const entry of stream) {
+    switch (args.outputTo.to) {
+      case "stdout":
+        console.log(`${"-".repeat(80)}
 specifier: ${entry.specifier}
 kind:      ${entry.kind}
 
 ${entry.source}
 `);
-          break;
-        case "fs":
-          unreachable();
-          break;
-        default: {
-          const _: never = args.outputTo;
-          unreachable();
-        }
+        break;
+      case "fs":
+        unreachable();
+        break;
+      default: {
+        const _: never = args.outputTo;
+        unreachable();
       }
     }
-  } catch (err: unknown) {
-    if (err instanceof APIError) {
-      error(`Failed to download the source code: ${err.message}`);
-    }
-    throw err;
   }
 }
 

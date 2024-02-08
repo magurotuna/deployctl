@@ -33,22 +33,21 @@ export class APIError extends Error {
   code: string;
   xDenoRay: string | null;
 
-  name = "APIError";
-
-  constructor(code: string, message: string, xDenoRay: string | null) {
-    super(message);
-    this.code = code;
-    this.xDenoRay = xDenoRay;
+  static {
+    this.prototype.name = "APIError";
   }
 
-  toString() {
-    let error = `${this.name}: ${this.message}`;
-    if (this.xDenoRay !== null) {
-      error += `\nx-deno-ray: ${this.xDenoRay}`;
+  constructor(code: string, message: string, xDenoRay: string | null) {
+    let error = `${APIError.name}: ${message}`;
+    if (xDenoRay !== null) {
+      error += `\nx-deno-ray: ${xDenoRay}`;
       error += "\nIf you encounter this error frequently," +
         " contact us at deploy@deno.com with the above x-deno-ray.";
     }
-    return error;
+    super(error);
+
+    this.code = code;
+    this.xDenoRay = xDenoRay;
   }
 }
 
