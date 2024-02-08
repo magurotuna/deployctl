@@ -27,6 +27,12 @@ export interface Deployment {
   envVars: string[];
 }
 
+export interface DeploymentDownloadEntry {
+  specifier: string;
+  kind: "JavaScript" | "Json" | "Jsonc";
+  source: string;
+}
+
 export interface Project {
   id: string;
   name: string;

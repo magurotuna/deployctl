@@ -27,24 +27,26 @@ Deno.test("parseArgsForDownloadSrcSubcommand", async (t) => {
   });
 
   await t.step("specify deployment ID", () => {
-    const got = parseHelper(["abcd1234"]);
+    const got = parseHelper(["--token=mytoken", "abcd1234"]);
     assertEquals(got, {
       mode: "download",
       outputTo: {
         to: "stdout",
       },
       deploymentId: "abcd1234",
+      token: "mytoken",
     });
   });
 
   await t.step("specify stdout and deployment ID", () => {
-    const got = parseHelper(["--stdout", "abcd1234"]);
+    const got = parseHelper(["--token", "mytoken", "--stdout", "abcd1234"]);
     assertEquals(got, {
       mode: "download",
       outputTo: {
         to: "stdout",
       },
       deploymentId: "abcd1234",
+      token: "mytoken",
     });
   });
 
@@ -54,7 +56,11 @@ Deno.test("parseArgsForDownloadSrcSubcommand", async (t) => {
 
   // FIXME
   await t.step("specify output-dir and deployment ID", () => {
-    const got = parseHelper(["--output-dir=./out", "abcd1234"]);
+    const got = parseHelper([
+      "--token=mytoken",
+      "--output-dir=./out",
+      "abcd1234",
+    ]);
     assertEquals(got, {
       mode: "download",
       outputTo: {
@@ -62,6 +68,7 @@ Deno.test("parseArgsForDownloadSrcSubcommand", async (t) => {
         dir: "./out",
       },
       deploymentId: "abcd1234",
+      token: "mytoken",
     });
   });
 
@@ -76,13 +83,20 @@ Deno.test("parseArgsForDownloadSrcSubcommand", async (t) => {
   await t.step(
     "specify stdout, output-dir, and deployment ID (stdout takes precedence)",
     () => {
-      const got = parseHelper(["--stdout", "--output-dir=./out", "abcd1234"]);
+      const got = parseHelper([
+        "--stdout",
+        "--output-dir=./out",
+        "--token",
+        "mytoken",
+        "abcd1234",
+      ]);
       assertEquals(got, {
         mode: "download",
         outputTo: {
           to: "stdout",
         },
         deploymentId: "abcd1234",
+        token: "mytoken",
       });
     },
   );

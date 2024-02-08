@@ -1,5 +1,6 @@
 import { delay, TextLineStream } from "../../deps.ts";
 import { VERSION } from "../version.ts";
+import { DeploymentDownloadEntry } from "./api_types.ts";
 
 import {
   Build,
@@ -263,6 +264,17 @@ export class API {
       }
       throw err;
     }
+  }
+
+  downloadDeployment(
+    deploymentId: string,
+  ): Promise<AsyncGenerator<DeploymentDownloadEntry>> {
+    return this.#requestJsonStream(
+      `/v1/deployments/${deploymentId}/download`,
+      {
+        accept: "application/x-ndjson",
+      },
+    );
   }
 
   getLogs(
